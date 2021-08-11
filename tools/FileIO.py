@@ -8,7 +8,7 @@ import sys
 import subprocess
 import types
 import struct
-import gzip,bz2,zipfile,zlib
+import gzip,bz2,zipfile
 
 def execute(cmd, stderr = sys.stderr, run = True):
 	#a function wrapper to run subprocess.call
@@ -46,7 +46,7 @@ def read_arguments(arg_file):
 		if (line[0] == "#"):
 			continue
 		n = line.find("=")
-		assert n >=0, "Unkown argument line: %s" % line
+		assert n >=0, "Unknown argument line: %s" % line
 		arg = line[:n].strip()
 		value = line[(n+1):].strip()
 		arguments[arg] = value
@@ -61,7 +61,7 @@ def write_arguments(arguments, arg_file):
 			value = ""
 			comment = ""
 		elif (len(i) == 2):
-			arg == i[0]
+			arg = i[0]
 			value = i[1]
 			comment = ""
 		elif (len(i) >= 3):
@@ -348,7 +348,7 @@ class BinIO(FileIO):
 		count = len(x)
 		t = count * "s"
 		line = struct.pack(t, x)
-		self.o.write(line)
+		self.write(line)
 	
 	def writeLongString(self, x):
 		string_len = len(x)

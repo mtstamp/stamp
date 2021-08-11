@@ -6,12 +6,17 @@
 
 import sys, os
 
-#initialize probe names
+#set probe names
 probe_all = []
+#46 mtDNA probes
 for i,n in [("A",12),("B",12),("C",12),("D",10)]:
 	for j in range(1,n+1):
 		probe_all.append(i+str(j))
+
+#5 nDNA probes
 probe_all.extend(["b2m","SERPINA1","emc1","wrn","axl"])
+
+#mtDNA and nDNA in total
 probe_all.extend(["mtDNA","nDNA"])
 	
 if __name__ == "__main__":
@@ -32,7 +37,7 @@ if __name__ == "__main__":
 	head.extend(["nDNA.amps.s%d" % (i+1) for i in range(20)])
 	print >>sys.stdout, "\t".join(head)
 	family_num = {}
-	with open("%.family_num.summary" % sys.argv[1], "r") as fh:
+	with open("%s.family_num.summary" % sys.argv[1], "r") as fh:
 		for line in fh:
 			line = line.rstrip("\r\n").split(" ")
 			#sample id
@@ -55,7 +60,7 @@ if __name__ == "__main__":
 			assert probe not in family_num[id]
 			family_num[id][probe] = [amps, reads, fam_size]
 	reads = {}
-	with open("%s.all.reads.summary"  % sys.argv[1], "r") as fh:
+	with open("%s.reads.summary" % sys.argv[1], "r") as fh:
 		for line in fh:
 			line = line.strip().split()
 			id = line[1]
@@ -73,8 +78,8 @@ if __name__ == "__main__":
 				reads[id][6] = int(line[5])
 	family_size_ndna = {}
 	family_size_mtdna = {}
-	if (os.path.exists("%s.all.family_size.summary" % sys.argv[1])):
-		with open("%s.all.family_size.summary" % sys.argv[1], "r") as fh:
+	if (os.path.exists("%s.family_size.summary" % sys.argv[1])):
+		with open("%s.family_size.summary" % sys.argv[1], "r") as fh:
 			for line in fh:
 				line = line.rstrip("\r\n").split(" ")
 				#probe id

@@ -5,12 +5,11 @@
 #Usage:
 #main
 #retrieve variant information
-#require .var file output from MitoScan.py
+#require .var file output from scan.py
 #
 ##############################################################################
 
-import os, sys
-import re
+import sys
 
 from argparse import ArgumentParser
 
@@ -57,7 +56,7 @@ reference_seq = {}
 
 class MtVariant:
 	""" 
-	This is a class for storing informaiton of one mtDNA variant
+	This is a class for storing information of one mtDNA variant
 	
 	Attributes
 	----------
@@ -112,7 +111,7 @@ class MtVariant:
 		self.alt_freq_sbias = toFloat(alt_freq_sbias, 1.0)
 		self.alt_freq_raw = self.alt_freq
 		if (self.alt_freq_llr <= llr_min or self.alt_freq_sbias <= sbias_min):
-			#set frequence to zero
+			#set frequency to zero
 			self.alt_freq = 0.0
 			self.low_qual = True
 			#self.alt_allele = ""
@@ -145,7 +144,7 @@ def getMtVariant(data, depth_min = 10, depth_ratio_min = 0.0):
 	depth_min: the minimum depth of a variant
 	depth_ratio_min: the minimum ratio of reads that pass QC
 	
-	Returns:
+	Returns
 	----------
 	a dict of extracted variants grouped by family and sample
 	
@@ -177,7 +176,7 @@ def getMtMajorAllele(data, depth_min = 10, depth_ratio_min = 0.0):
 	depth_min: the minimum depth of a variant
 	depth_ratio_min: the minimum ratio of reads that pass QC
 	
-	Returns:
+	Returns
 	----------
 	a dict of extracted variants grouped by family and sample
 	
@@ -209,7 +208,7 @@ def getMtHomoplasmy(data, depth_min = 10, depth_ratio_min = 0.0, freq_min = 0.01
 	depth_ratio_min: the minimum ratio of reads that pass QC
 	freq_min: the maximum frequency of a possible minor allele
 	 
-	Returns:
+	Returns
 	----------
 	a dict of extracted variants grouped by family and sample
 	
@@ -246,7 +245,7 @@ def isHeteroplasmy(variant, depth_min = 40, depth_strand = 0, depth_ratio_min = 
 	depth_ratio_min: the minimum ratio of reads passing QC
 	freq_min: the minimum minor allele frequency
 	
-	Returns:
+	Returns
 	----------
 	True: is a heteroplasmy
 	False: not a heteroplasmy
@@ -305,7 +304,7 @@ def readMtVariant(variant_file, fam_excl = {}, pos_excl = {}):
 	fam_excl: family ids to be excluded (dict, list or tuple)
 	pos_excl: positions to be excluded (dict, list or tuple)
 	
-	Returns:
+	Returns
 	----------
 	a tuple of
 	1. file head information

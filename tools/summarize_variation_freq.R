@@ -2,7 +2,7 @@
 #
 #Updated by: Yiqin Wang
 #TODO
-#to add similiar functionality in annot
+#to add similiar functionalities in annot
 #
 ##############################################################################
 
@@ -17,9 +17,10 @@ var = var[order(var$sample, var$pos),]
 var1 = var1[order(var1$sample, var1$pos),]
 var2 = var2[order(var2$sample, var2$pos),]
 
+#print out the number of variants in each file
 print(sprintf("Read %d rows from %s", nrow(var), args[1]))
-print(sprintf("Found %d matched records in %s, sum(var$pos == var1$pos & var$sample == var1$sample), args[2]))
-print(sprintf("Found %d matched records in %s, sum(var$pos == var2$pos & var$sample == var2$sample), args[3]))
+print(sprintf("Found %d matched records in %s", sum(var$pos == var1$pos & var$sample == var1$sample), args[2]))
+print(sprintf("Found %d matched records in %s", sum(var$pos == var2$pos & var$sample == var2$sample), args[3]))
 
 allele.count <- as.matrix(cbind(var1[,c("A","T","C","G")],var2[,c("A","T","C","G")]))
 

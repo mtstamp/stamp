@@ -7,7 +7,7 @@
 import os
 import re
 from FileIO import FileIO
-from collections import defaultdict
+#from collections import defaultdict
 
 def flip(x):
 	#return a reverve complementary string
@@ -64,7 +64,7 @@ class FastaIO:
 		Arguments
 		----------
 		fasta_file: the path to the fasta file
-		index_file: the path to the fasta index file; if not specidied, will look for file names ${fasta_file}.fai
+		index_file: the path to the fasta index file; if not specified, will look for file names ${fasta_file}.fai
 		
 		"""
 		#read index if exists
@@ -124,6 +124,7 @@ class FastaIO:
 		seq_name = []
 		seq_line = []
 		#align_state = ""
+		name=""
 		n = 0
 		for line in fasta_fh:
 			n += 1
@@ -155,11 +156,9 @@ class FastaIO:
 		
 		Arguments
 		----------
-		cord: sequence name and positions, i.e.
-		name
-		name:start-end (start and end are 1-based, represent the region of [start,end))
+		cord: sequence name and positions, e.g., name, name:start-end (start and end are 1-based, represent the region of [start,end))
 		
-		Returns:
+		Returns
 		----------
 		see fetch(...)
 		
@@ -191,9 +190,9 @@ class FastaIO:
 		end: end position
 		start and end are 1-based, represent the region of [start,end).
 		
-		Outputs
+		Returns
 		----------
-		a turple of 
+		a tuple of
 		1. sequence name (the same as the argument seq)
 		2. start (the offset position in the original sequence, 0-based)
 		3. the sequence of the region (None if the region is not valid or not included)
@@ -303,7 +302,7 @@ class FastqIO:
 		phred: a list of cumulative phred scores
 		length: a dict of read length and count
 		
-		Returns:
+		Returns
 		----------
 		a list of the average base quality for each position in the phred list
 		
@@ -324,7 +323,7 @@ class FastqIO:
 		
 		use __quality__(...) and the read quality and length information were recorded. 
 				
-		Returns:
+		Returns
 		----------
 		a tuple of
 		1. a list of the average base quality for each position in R1
@@ -339,7 +338,7 @@ class FastqIO:
 		""" 
 		the next function for iterating each read pair in the fastq files provided
 		
-		Returns:
+		Returns
 		----------
 		a tuple of
 		1. R1: a tuple of read name, read sequence, read quality
@@ -476,11 +475,9 @@ class SAMCigar:
 		Attributes
 		----------
 		cigar: a tuple representing the cigar string
-		align_seq: base of aligned reads at each position of the reference
-		align_qual: base quality of aligned reads at each position of the reference
 		ref_start: the start position in the reference
-		ref_len: the mapped length in the reference
-		ref_end: the end position in the reference
+		seq: sequence string
+		qual: quality string
 			
 		"""
 		self.ref_start = ref_start
@@ -522,7 +519,7 @@ class SAMCigar:
 					align_qual.extend([None,]*i)
 				else:
 					#other cigar stats, such as N in mRNA alignment
-					raise NotImplementedError("Current vesion does not support <%s> in cigar string" % j)
+					raise NotImplementedError("The current version does not support <%s> in cigar string" % j)
 				last_stat = j
 			self.align_seq = align_seq
 			self.align_qual = align_qual

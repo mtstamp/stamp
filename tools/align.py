@@ -7,7 +7,7 @@
 #
 ##############################################################################
 
-#the path to the executables, updated Jan 2018
+#the path to the executables
 samtools = "samtools-1.6" 
 bwa ="bwa-0.7.17"
 bamleftalign="bamleftalign-1.1.0"
@@ -243,7 +243,7 @@ def retrieve_probes(probe_file):
 			if (line):
 				info = line.split("\t")
 				if (len(info) < 8):
-					raise ValueError("Unkown probe information %s at line %d" % (line, n))
+					raise ValueError("Unknown probe information %s at line %d" % (line, n))
 				name, chr, start, end, r1_strand, r2_strand, r1_probe, r2_probe, barcode_len = info[:9]
 				try:
 					start = int(start)+1
@@ -297,7 +297,7 @@ def parse_allele(string):
 		if (not allele):
 			return int(pos), None
 	except:
-		#print >>sys.stderr, "Unkown allele pattern: " + string
+		#print >>sys.stderr, "Unknown allele pattern: " + string
 		return None, None
 	return int(pos), allele
 
@@ -369,7 +369,7 @@ def retrieve_alternate_sequences(hsd_file, offset = 0):
 			start = int(start)+offset
 			end = int(end.replace(";",""))+offset
 		except:
-			raise ValueError("Unkown mtDNA range: %s" % line[1])
+			raise ValueError("Unknown mtDNA range: %s" % line[1])
 		if (start > end):
 			#split the sequence into two if it spans the D-loop region: start ==> mtdna_length+offset and 1==>end+offset
 			range = [(id + "_1", start, mtdna_len+offset),(id + "_2", 1, end)]
@@ -529,7 +529,7 @@ def retrieve_tags(sample_name, fastq_r1, fastq_r2, probe, probe_reverse = False,
 	else:
 		trim_limit = None
 	
-	#for each read pairs fo R1 and R2
+	#for each read pairs of R1 and R2
 	for r1_input, r2_input in zip(fastq_r1, fastq_r2):
 		if (not probe_reverse):
 			input = FastqIO(r1_input, r2_input)
@@ -547,7 +547,7 @@ def retrieve_tags(sample_name, fastq_r1, fastq_r2, probe, probe_reverse = False,
 					continue
 				read_r1 = read_r1[:l1]; quality_r1 = quality_r1[:l1]
 				read_r2 = read_r2[:l2]; quality_r2 = quality_r2[:l2]
-			#mask low-quality based in R1 and R2 with N
+			#mask low-quality bases in R1 and R2 with N
 			tag_r1 = string_mask(read_r1[tag_start:(tag_start+tag_len)], quality_r1[tag_start:(tag_start+tag_len)], barcode_minq_char)
 			tag_r2 = string_mask(read_r2[tag_start:(tag_start+tag_len)], quality_r2[tag_start:(tag_start+tag_len)], barcode_minq_char)
 			
@@ -724,10 +724,10 @@ def retrieve_XM_info(alignment, paired = True):
 			info = alignment[i][5:].split(":")
 			if (paired):
 				if (len(info) != 4):
-					raise ValueError("Unkown information column \"%s\"" % info)
+					raise ValueError("Unknown information column \"%s\"" % info)
 			else:
 				if (len(info) != 3):
-					raise ValueError("Unkown information column \"%s\"" % info)
+					raise ValueError("Unknown information column \"%s\"" % info)
 			return info
 	return ""
 
@@ -761,7 +761,7 @@ def retrieve_allele_info(val, remover_n=False):
 				if (not remover_n or allele != "N"):
 					info[pos] = allele
 	except:
-		raise ValueError("Unkown allele information <%s>" % val)
+		raise ValueError("Unknown allele information <%s>" % val)
 	return info
 
 def retrieve_tag_info(alignment, tag, type):
@@ -795,7 +795,7 @@ def retrieve_tags_info(alignment):
 	
 	Returns
 	----------
-	a dict of all tages and their tag values
+	a dict of all tags and their tag values
 	
 	"""
 	tags = {}
@@ -858,12 +858,12 @@ def align_reads_to_reference(fastq_r1, fastq_r2, reference, probe_info):
 		line = line.split("\t")
 		info = retrieve_XM_info(line)
 		if (not info):
-			raise ValueError("Unkown information at line %d" % n)
+			raise ValueError("Unknown information at line %d" % n)
 		read, barcode, probe_r1, probe_r2 = info 
 		if (read not in ("1","2") or 
 			probe_r1 not in probe_info or
 			probe_r2 not in probe_info):
-			raise ValueError("Unkown information column \"%s\" at line %d" % (info, n))
+			raise ValueError("Unknown information column \"%s\" at line %d" % (info, n))
 		if (probe_r1 != probe_r2):
 			#exclude off-target alignments
 			continue
@@ -1172,7 +1172,7 @@ def retrieve_read_family(bam_file, prb_name, chr, start, end, barcode_index):
 			alignment = family[barcode][qname]
 			r = int(read)-1 #0:r1; 1:r2
 			if (alignment[r]):
-				raise ValueError("Ambiguous alignment %s (%s)" % (alignment[0], ":".join(info)))
+				raise ValueError("Ambiguous alignment %s (%s)" % (alignment[0], ":".join([read, barcode, r1_probe, r2_probe])))
 			alignment[r] = line
 	pf.stdout.close()
 	return family
@@ -1195,7 +1195,7 @@ def estimate_family_num(prb_name, sample_name, family_count):
 	
 	"""
 	def poission_count(l):
-		#compute a log likelihood of the poission distribution with a parameter lambda equal to l
+		#compute a log-likelihood of the poisson distribution with the parameter lambda equal to l
 		lnl = log(l)
 		lnc = log(1.0-exp(-l))
 		ret = 0.0 #-1000*exp(-l)*l
@@ -1245,7 +1245,7 @@ def call_consensus_reads(alignments):
 		if (q is not None and q < 4):
 			continue
 		if (s == "A"):
-			#phred to probality
+			#phred to probability
 			n += 1
 			q = prob(q); r[0] *= 1-q; #true
 			if (merge_corrected): q = q/3.0
@@ -1272,7 +1272,7 @@ def call_consensus_reads(alignments):
 		elif (s == "N"):
 			pass
 		else:
-			raise ValueError("Unkown nucleotide \"%s\"" % s)
+			raise ValueError("Unknown nucleotide \"%s\"" % s)
 	#no effective reads
 	if (n == 0 and deletion == 0 and not insertion):
 		return "N", 0
@@ -1315,7 +1315,7 @@ def build_consensus_reads(family, strand, clip_end, ref_seq, ref_seq_offset, min
 	clip_end: clip the overlapping region if turned on
 	ref_seq: the reference mtdna sequence
 	ref_seq_offset: the position offset used in parsing mtdna variants
-	min_base_qual: mininum base quality score for determining high-quality bases
+	min_base_qual: minimum base quality score for determining high-quality bases
 		
 	Returns
 	----------
@@ -1504,7 +1504,7 @@ def build_consensus_reads(family, strand, clip_end, ref_seq, ref_seq_offset, min
 			if (cur_stat == "M"):
 				consensus_cigar[-1][0] += gap_size
 			else:
-				consensus_cigar.append([n, "M"])
+				consensus_cigar.append([gap_size, "M"])
 				cur_stat = "M"
 			consensus_seq.extend(["N",]*gap_size)
 			consensus_qual.extend([0,]*gap_size)
@@ -1559,12 +1559,12 @@ def retrieve_consensus_reads(sample_name, alignments_mtdna, alignments_ndna, pro
 	genome_refseq: path to the reference genome
 	mtdna_refseq: path to the reference mtdna
 	mtdna_cord_offset: position offset used in parsing mtdna variants
-	mtdna_alt_seq: alternate mtDNA sequences. i.e. numts, alignment artifacts 
+	mtdna_alt_seq: alternate mtDNA sequences. e.g., sequences of numts, alignment artifacts
 	recalibrate_base_qual: recalibrate base quality if turned on (default: yes)
 	clip_end: clip the overlapping region of r1 and r2 (default: no)
 	consensus_nm: the maximum rate of mismatches in consensus reads (default: 0.025 >=8 in most target regions)
 	consensus_xf: the minimum family size of consensus reads
-	consensus_gap: the maximium length of gap allowed in each consensus read (output as N; default: 50)
+	consensus_gap: the maximum length of gap allowed in each consensus read (output as N; default: 50)
 	consensus_qual: the minimum base quality score used to count low quality bases (default: 0; not used)
 	consensus_lqbase: the maximum number of low quality bases allowed in each consensus read (default:200; not used)
 	
@@ -1575,12 +1575,12 @@ def retrieve_consensus_reads(sample_name, alignments_mtdna, alignments_ndna, pro
 	"""
 	if (not outpath):
 		outpath = "."
-	#retrive barcode information processed in retrieve_tags
+	#retrieve barcode information processed in retrieve_tags
 	barcode_cache = defaultdict(lambda:list())
 	#default barcode file: *.barcode
 	if (os.path.exists(barcode_file)):
 		#read barcode group information if it exists
-		#barcode groups were define during tag retrieval where barcodes diff nt at a low-quality site were considered from the same read family
+		#barcode groups were defined during tag retrieval where barcodes diff nt at a low-quality site were considered from the same read family
 		#retrieve barcode information processed in retrieve_tags
 		barcode_dmin = 3
 		with open(barcode_file) as fh:
@@ -1823,7 +1823,7 @@ def retrieve_consensus_reads(sample_name, alignments_mtdna, alignments_ndna, pro
 	#estimate average family size for all possible nDNA fragments
 	ndna_cn, ndna_pool = estimate_family_num("nDNA", sample_name, ndna_family_count)
 	#mtDNA copy number as the ratio between mtDNA coverage/family number and nDNA coverage/family number
-	#
+	#this mtDNA copy number method does not take capture efficiency differences into consideration. (obsolete)
 	if (ndna_cn > 0 and ndna_pool > 0):
 		#this is a beta function for mtDNA copy number calculation, not used for real analyses at this point
 		print >>LOG, "mito_copy_number", sample_name, mtdna_cn*ndna_nc/mtdna_nc/ndna_cn*2, mtdna_pool*ndna_nc/mtdna_nc/ndna_pool*2
@@ -1947,7 +1947,7 @@ def run(prog, args):
 		#map filtered reads to the reference genomes
 		alignments_mtdna, alignments_ndna = retrieve_alignments(options.sample, r1, r2, probe, outpath, options.genome, options.mtdna, options.mtdna_offset)
 	"""
-	#skip the read demultiplexin step if the output file already exists
+	#skip the read de-multiplexing step if the output file already exists
 	if (fastq_r1 is not None and str(fastq_r1) != r1 and (options.override or not os.path.exists(r1) or not os.path.exists(r2))):
 		#logging
 		logging_file = outpath + os.path.sep + options.sample + ".summary"
@@ -1976,12 +1976,12 @@ def run(prog, args):
 	#step 3
 	#check the existence of the output files
 	#skip existing files if override is turned off
-	re_alignments_mtdna = outpath + os.path.sep + options.sample + ".mtdna.sorted.realign"+(".recal.bam" if not options.no_recalibration else +".bam")
-	re_alignments_ndna = outpath + os.path.sep + options.sample + ".ndna.sorted.realign"+(".recal.bam" if not options.no_recalibration else +".bam")
+	re_alignments_mtdna = outpath + os.path.sep + options.sample + ".mtdna.sorted.realign"+(".recal.bam" if not options.no_recalibration else ".bam")
+	re_alignments_ndna = outpath + os.path.sep + options.sample + ".ndna.sorted.realign"+(".recal.bam" if not options.no_recalibration else ".bam")
 	if (os.path.exists(alignments_mtdna) and (options.override or not os.path.exists(re_alignments_mtdna) or not os.path.exists(re_alignments_ndna))):
 			re_alignments_mtdna, re_alignments_ndna = retrieve_re_alignments(options.sample, alignments_mtdna, alignments_ndna, outpath, options.genome, options.mtdna, not options.no_recalibration)
 	
-	#read alternate mtDNA sequences. i.e. numts, alignment artifacts 
+	#read alternate mtDNA sequences. e.g., sequences of numts, alignment artifacts in hsd format
 	if (options.numts):
 		mtdna_alt_seq = retrieve_alternate_sequences(options.numts, options.mtdna_offset)
 	else:

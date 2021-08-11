@@ -8,7 +8,7 @@
 #
 ##############################################################################
 
-import os, sys
+import sys
 import re
 import copy
 
@@ -66,7 +66,7 @@ def readRB(readbases):
 	
 	Returns
 	----------
-	a tuple of a tring of single bases, a dict of deletions 
+	a tuple of a string of single bases, a dict of deletions
 	
 	"""
 	readbases_old = readbases 
@@ -129,11 +129,11 @@ def readMpileup(fh, sample_idx = 0, sample_name = "s", quality_min = 20, rm_rate
 	2. sample name
 	3. chromosome
 	4. position
-	5. letter of base on the foward string
+	5. letter of base on the forward strand
 	6. total depth of reads
-	7. base count (a dict of keys represeting bases)
+	7. base count (a dict of keys representing bases)
 	8. insertion count
-	9. delection count
+	9. deletion count
 	10. associated BAQ list (optional)
 	
 	"""
@@ -153,7 +153,7 @@ def readMpileup(fh, sample_idx = 0, sample_name = "s", quality_min = 20, rm_rate
 		if (not line):
 			continue
 		line = line.split("\t")
-		assert len(line) == nsample*3 + 3, "The number of columns in the mpileup file <%s> doesn't match" % fname
+		assert len(line) == nsample*3 + 3, "The number of columns in the mpileup file <%s> doesn't match" % fh.name
 		chr = line[0]
 		pos = int(line[1])
 		ref_fwd = line[2].upper() #reference allele on the forward strand
@@ -189,7 +189,7 @@ def readMpileup(fh, sample_idx = 0, sample_name = "s", quality_min = 20, rm_rate
 			ins_count = dict(Counter(insertions)) #to update
 			del_count = dict(Counter(deletions))
 			if (depth and sum(nt_count.values())/float(depth) >= rm_rate):
-				#do not return if no reads are found or the rate of bases left is lower thahn rm_rate
+				#do not return if no reads are found or the rate of bases left is lower than rm_rate
 				yield (i, name, chr, pos, ref_fwd, depth, nt_count, ins_count, del_count, rq if (retain_quality) else None)
 
 class MTSite:
@@ -253,11 +253,11 @@ class MTSite:
 		11. minor allele
 		12. the fraction of the minor allele
 		13. the MLE of the fraction of the minor allele
-		14. the Log-likehood of the MLE fraction
-		15. 2.5% low bount of the fraction
-		16. 97.5% upper bound of the fraction 
-		17. P value from fishers test for the minimum fraction
-		18. P value for strand bias
+		14. the Log-likelihood of the MLE fraction
+		15. 2.5% lower bound of the MLE fraction
+		16. 97.5% upper bound of the MLE fraction
+		17. P value from Fisher's test for difference from the minimum fraction
+		18. P value for strand bias of variant fractions
 		"""
 		heteroplasmy = ["",]*8 if self.heteroplasmy is None else self.heteroplasmy
 		return "\t".join(stringList([self.chr, self.pos, self.ref, self.depth, self.depth_fwd, self.depth_rev, self.allele] + \
@@ -269,7 +269,7 @@ class MTSite:
 	
 	def callAllele(self, min_depth, min_depth_fwd, min_depth_rev, min_minor_depth, min_minor_depth_fwd, min_minor_depth_rev, min_het_freq):
 		""" 
-		indentify the major and the minor alleles at a position
+		identify the major and the minor alleles at a position
 		
 		Arguments
 		----------
@@ -282,7 +282,7 @@ class MTSite:
 		min_minor_depth_rev: the minimum read depth of the minor allele on the reverse strand
 		min_het_freq: the minimum fraction of the minor allele
 		
-		Returns:
+		Returns
 		----------
 		None
 		
@@ -336,14 +336,14 @@ class MTSite:
 	
 	def downSample(self, depth):
 		""" 
-		Down sample reads to the depth specficied.
-		Reads were stored in the readsquility attribute.
+		Down sample reads to the depth specified.
+		Reads were stored in the reads quality attribute.
 		
 		Arguments
 		----------
 		depth: int depth of read; should be smaller than the current read depth
 		
-		Returns:
+		Returns
 		----------
 		None
 		
@@ -377,7 +377,7 @@ class MTSite:
 	def estimateHeteroplamy(self, major, a1, minor, a2):
 		""" 
 		estimate the minor allele fraction of a heteroplasmy
-		if the original bases and BAQ are stored, a log-likelihood estimation of the fraction will be computed
+		if the original bases and BAQ are stored, a log-likelihood estimation of the fraction is computed
 		
 		Arguments
 		----------
@@ -386,7 +386,7 @@ class MTSite:
 		minor: minor allele
 		a2: int minor allele count
 		
-		Returns:
+		Returns
 		----------
 		a tuple of 
 		1. fraction: a2/(a1+a2)
@@ -455,10 +455,10 @@ class MTSite:
 		
 		Arguments
 		----------
-		sample2 (MTSite)
+		sample2: (MTSite)
 		ref_allele: give a reference allele (optional)
 		
-		Returns:
+		Returns
 		----------
 		a status string of 
 		Allele difference/Same Allele/Comparable Heteroplasmy/Decreased Heteroplasmy/Increased Heteroplasmy
@@ -521,12 +521,12 @@ class MTSite:
 		
 		Arguments
 		----------
-		sample2 (MTSite)
+		sample2: (MTSite)
 		a1: major allele
 		a2: minor allele'
 		p: significance level
 		
-		Returns:
+		Returns
 		----------
 		-1: sample2 has a higher fraction
 		1: sample1 has a higher fraction
@@ -544,7 +544,7 @@ class MTSite:
 
 class MTScan:
 	""" 
-	This is a class for processing a mpileup file
+	This is a class for processing an mpileup file
 	
 	Attributes
 	----------
@@ -612,7 +612,7 @@ class MTScan:
 		----------
 		end: the end position
 		
-		Returns:
+		Returns
 		----------
 		an iterator of tuples containing
 		1. lists of MTSite for samples indicated
@@ -657,12 +657,8 @@ class MTScan:
 		""" 
 		call mtDNA variants at only variant sites
 		same as allSites(...) but only return sites where variants are found
-		
-		Arguments
-		----------
-		end: the end position
-		
-		Returns:
+
+		Returns
 		----------
 		an iterator of tuples containing
 		1. lists of MTSite for samples indicated
@@ -791,7 +787,7 @@ def run(prog, args):
 			if (is_var):
 				is_var_total = True
 		if (out_coverage):
-			out_coverage.write("%s\tchrM\t%s" % (family,cur))
+			out_coverage.write("%s\tchrM\t%s" % (options.family,cur))
 			for i, site in enumerate(sites_total):
 				out_coverage.write("\t")
 				if (site is not None):

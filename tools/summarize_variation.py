@@ -54,7 +54,7 @@ if (__name__ == "__main__"):
 			#order variants according to their positions
 			for i in sorted(out_pos.keys()):
 				line = var.get(i, out_pos[i])
-				#fill blanks to match the number of items in head
+				#fill blanks to match the number of items specified by the file header
 				if (len(line) < len(head)):
 					line = line + ["",]*(len(head)-len(line))
 				out.write("\t".join(map(str,line))+"\n")

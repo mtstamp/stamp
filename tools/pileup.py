@@ -35,7 +35,7 @@ def output_alignment_info(out, info, tags_incl = ("XF","XQ","XM","XA","XP")):
 	----------
 	out: the output file handle
 	info: an alignment line (string) or a list of alignment line items 
-	tags_incl: alignment annotation tages to be included for output
+	tags_incl: alignment annotation tags to be included for output
 		
 	Returns
 	----------
@@ -63,30 +63,21 @@ def output_alignment_info(out, info, tags_incl = ("XF","XQ","XM","XA","XP")):
 
 def summarize_alignment_file(alignment_file, tag_excl, tag_incl, mtdna_alt_seq, alt_fmin, alt_fmax):
 	"""
-	perform quality control filtering on the alignments of consensus reads.
-	all consensus reads will be retained in the resulting alignment file with QC annotations.
+	summarize the consensus read information without generating the pileup file.
 	
 	Arguments
 	----------
-	sample_name: the name of the sample
-	outpath: the path to store the output files
 	alignment_file: the consensus read alignment file(s) output from align
-	family_size_min: the minimum read family size of consensus reads (read family size refers the number of paired-end reads used to construct the consensus read)
-	family_size_max: the maximum read family size of consensus reads
-	nm_max: the maximum number of mismatches of consensus reads to the major mtDNA sequence in the coding region
-	nm_max_dloop: the maximum number of mismatches of consensus reads to the major mtDNA sequence in the dloop region
-	mtdna_offset: the position offset used in parsing mtDNA read alignments
 	tag_excl: exclude consensus reads with the tags specified
 	tag_incl: include consensus reads with the tags specified
 	mtdna_alt_seq: alternate mtdna sequences. i.e. retrieve_alternate_sequences(...)
 	alt_fmin: the minimum fraction to exclude reads from NUMTS (default:0%)
 	alt_fmax: the maximum fraction to exclude reads from NUMTS (default:100%)
-	
+
 	Returns
 	----------
-	a turple of 
-	1. the path to the processed alignment file
-	2. a dict of reads output
+	a dict of
+	alleles detected by each probe pair
 	
 	"""
 	
@@ -94,7 +85,7 @@ def summarize_alignment_file(alignment_file, tag_excl, tag_incl, mtdna_alt_seq, 
 	alignment_summary = {}
 	#alternate mtDNA sequence alleles marked by regions ("start-end")
 	mtdna_alt_seq_by_region = {}
-	#aleternate mDNA sequences marked by amplicons ("probe")
+	#alternate mDNA sequences marked by amplicons ("probe")
 	mtdna_alt_seq_by_probe = {}
 	#store potential numts
 	numts_seq = {}
@@ -130,7 +121,7 @@ def summarize_alignment_file(alignment_file, tag_excl, tag_incl, mtdna_alt_seq, 
 				qual_info = []
 			else:
 				qual_info = [i.upper() for i in xq_info[1].split(",")]
-			#check appropriate quanlty or tag infromation for including and excluding reads 	
+			#check appropriate quality or tag information for including and excluding reads
 			if (tag_incl):
 				n = 0
 				for i in qual_info:
@@ -296,7 +287,7 @@ def annotate_alignment_file(sample_name, outpath, alignment_file, family_size_mi
 	
 	Returns
 	----------
-	a turple of 
+	a tuple of
 	1. the path to the processed alignment file
 	2. a dict of reads passing QC 
 	"""
@@ -315,11 +306,11 @@ def annotate_alignment_file(sample_name, outpath, alignment_file, family_size_mi
 	out_alignment_file = outpath + os.path.sep + sample_name + ".unsorted.mtdna.consensus.bam"
 	out_mtdna_alignment = pipe_input("%s view -hbS -o %s - " % (samtools, out_alignment_file))
 	
-	#retain head imformation
+	#retain head information
 	out_mtdna_alignment.stdin.write(head_mtdna.stdout.read())
 	head_mtdna.stdout.close()
 	
-	#set the accetable range of family size
+	#set an accetable range of family size
 	fs_check = True
 	if (family_size_min is None):
 		if (family_size_max is None):
@@ -330,7 +321,7 @@ def annotate_alignment_file(sample_name, outpath, alignment_file, family_size_mi
 		if (family_size_max is None):
 			family_size_max = sys.maxint
 	
-	#set the accetable ranges for nucleotide mismatches
+	#set an accetable range of nucleotide mismatches
 	if (nm_max is None or nm_max < 0):
 		nm_max = sys.maxint
 		
@@ -389,7 +380,7 @@ def annotate_alignment_file(sample_name, outpath, alignment_file, family_size_mi
 			else:
 				qual_info = [i.upper() for i in xq_info[1].split(",")]
 			
-			#check appropriate quality or tag information for including and excluding reads 	
+			#check appropriate quality or tag information for including and excluding reads
 			if (tag_incl):
 				#only consider reads with tags provided
 				n = 0
@@ -579,7 +570,7 @@ def filter_alignment_file(sample_name, outpath, alignment_file, family_size_min,
 	
 	Returns
 	----------
-	a turple of 
+	a tuple of
 	1. the path to the processed alignment file
 	2. a dict of reads output
 	
@@ -602,7 +593,7 @@ def filter_alignment_file(sample_name, outpath, alignment_file, family_size_min,
 	out_mtdna_alignment.stdin.write(head_mtdna.stdout.read())
 	head_mtdna.stdout.close()
 	
-	#set the accetable range of family size
+	#set an accetable range of family size
 	fs_check = True
 	if (family_size_min is None):
 		if (family_size_max is None):
@@ -613,7 +604,7 @@ def filter_alignment_file(sample_name, outpath, alignment_file, family_size_min,
 		if (family_size_max is None):
 			family_size_max = sys.maxint
 	
-	#set the accetable ranges for nucleotide mismatches
+	#set an accetable range of nucleotide mismatches
 	if (nm_max is None or nm_max < 0):
 		nm_max = sys.maxint
 		
@@ -951,7 +942,7 @@ def generate_pileup_file(sample_name, outpath, gzip_pileup, alignment_file, alig
 				assert ref1 == ref, "the reference allele does not match at position %d" % pos_adj
 				#pileup reads if they aligned to the same positions
 				depth = int(depth) + int(depth1)
-				#concatenate reads and read qualities 
+				#concatenate reads and read qualities, respectively
 				r += r1
 				q += q1
 				#sum up quality stats
@@ -1063,7 +1054,7 @@ def run(prog, args):
 			if (i):
 				tag_incl[i] = 1	
 	
-	#read alternate mtDNA sequences. i.e. numts, alignment artifacts
+	#read alternate mtDNA sequences. e.g., seqeuences of numts, alignment artifacts in hsd format
 	if (options.numts):
 		mtdna_alt_seq = retrieve_alternate_sequences(options.numts, options.mtdna_offset)
 	else:
@@ -1080,10 +1071,10 @@ def run(prog, args):
 					for i, j in zip(minor_nm, alt_nm):
 						out.write("\t".join(map(str,[options.sample, r1_probe, family_size, i, j]))+"\n")
 	elif (options.output_alignment):
-		#annotate mtDNA consensus read alignments with the fileters specified
+		#annotate mtDNA consensus read alignments with the filters specified
 		alignment_file_after_qc, alignment_reads_after_qc = annotate_alignment_file(options.sample, options.outpath, alignment_file, options.fs_min, options.fs_max, options.nm_max, options.nm_max_dloop, options.mtdna_offset, tag_excl, tag_incl, mtdna_alt_seq, options.numts_fmin, options.numts_fmax)
 	else:
-		#process mtDNA consensus read alignments with the fileters specified
+		#process mtDNA consensus read alignments with the filters specified
 		alignment_file_after_qc, alignment_reads_after_qc = filter_alignment_file(options.sample, options.outpath, alignment_file, options.fs_min, options.fs_max, options.nm_max, options.nm_max_dloop, options.mtdna_offset, tag_excl, tag_incl, mtdna_alt_seq, options.numts_fmin, options.numts_fmax)
 		
 		#generate the consensus pileup file for calling variants
