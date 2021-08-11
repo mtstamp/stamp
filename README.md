@@ -1,8 +1,8 @@
 # STAMP tool kit
 
-**`stamp`** is a set of computational tools developed for processing sequencing data from **mt-STAMP** (**s**equencing by **t**argeted **a**mplification of **m**ultiplex **p**robes). **mt-STAMP** is a labor- and cost-effective sequencing method designed for assessing human mitochondrial DNA (mtDNA) variations, including mtDNA homoplasmies, mtDNA heterpolasmies and mtDNA content, in large-scale population studies. 
+**`stamp`** is a set of computational tools developed for processing sequencing data from **mt-STAMP** (**s**equencing by **t**argeted **a**mplification of **m**ultiplex **p**robes) which is a labor- and cost-effective sequencing method designed for assessing human mitochondrial DNA (mtDNA) variations, including mtDNA homoplasmies, mtDNA heteroplasmies and mtDNA content, in large-scale population studies. 
 
-The **mt-STAMP** manuscript is in preparation. If you have questions about **mt-STAMP**, please contact [Zhenglong Gu](mailto:zg27@cornell.edu) (at Cornell University) for details.
+The paper of **mt-STAMP** has been published in *NAR Genomics and Bioinformatics* [1]. If you have questions about **mt-STAMP**, please contact [Zhenglong Gu](mailto:zg27@cornell.edu) (at Cornell University) for details.
 If you have questions about **`stamp`** and related tools in this repository, please contact [Yiqin Wang](mailto:yw729@cornell.edu).
 
 ## Table of Contents
@@ -11,8 +11,9 @@ If you have questions about **`stamp`** and related tools in this repository, pl
 2. [Lists of stamp arguments](#lists-of-stamp-arguments)
 3. [Examples of stamp](#examples-of-stamp)
 4. [Other tools](#other-tools)
-5. [References](#references)
-6. [Licensing](#licensing)
+5. [Updates](#updates)
+6. [References](#references)
+7. [Licensing](#licensing)
 
 ## Install and set up prerequisites
 
@@ -20,8 +21,8 @@ At the root of your project, use **`git clone`** to download the current **`stam
 ```shell
 git clone https://github.com/mtstamp/stamp.git
 ```
-**`stamp`** relies on [bwa-mem](https://github.com/lh3/bwa) [1] and bamleftalign from [freebayes](https://github.com/ekg/freebayes) [2] for aligning paired-end reads, and [samtools](https://github.com/samtools/) [3] for processing alignment file and summarizing base information. So you need to have access to the executables of these tools. 
-**`stamp`** uses the reference human genome containing both nuclear DNA (genome assembly GRCh38) and mitochondrial DNA (mtDNA; Revised Cambridge Reference Sequence, rCRS) sequences for read alignment, you can download the reference human genome (GRCh38 plus rCRS and other sequences) and the pre-built index files from the ftp site of the 1000 Genomes project.
+**`stamp`** relies on [bwa-mem](https://github.com/lh3/bwa) [2] and bamleftalign from [freebayes](https://github.com/ekg/freebayes) [2] for aligning paired-end reads, and [samtools](https://github.com/samtools/) [3] for processing alignment files and summarizing base information. So you need to have access to the executables of these tools to run **`stamp`**. 
+**`stamp`** uses the reference human genome containing both nuclear DNA (genome assembly GRCh38) and mitochondrial DNA (mtDNA; the Revised Cambridge Reference Sequence, rCRS) sequences for read alignment. You can download the file containing the reference human genome sequence (GRCh38 plus rCRS and other sequences) and the pre-built index files from the ftp site of the 1000 Genomes project.
 ```bash
 cd stamp
 cd refseq
@@ -30,13 +31,14 @@ wget ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/GRCh38_referen
 ```
 **`stamp`** also aligns paired-end reads to a revised rCRS with the final 120bp copied to the start to accommodate alignment of reads in the D-loop region of the circular mtDNA sequence. This revised rCRS and its pre-built index files are provided in the folder refseq.
 
-Once the download is complete, use **`stamp init`** to check the availability of necessary python packages and set the default values for a number of commonly used arguments in **`stamp`**.
+Once download is complete, use **`stamp init`** to check the availability of necessary python packages and set the default values for a number of commonly used arguments in **`stamp`**.
 
 ```bash
 python stamp.py init \
 --bwa $HOME/bin/bwa \
 --samtools $HOME/bin/samtools \
 --bamleftalign $HOME/bin/bamleftalign \
+--picard "java -jar $HOME/bin/picard.jar"\
 --probe $PWD/refseq/stamp_el_probe.txt \
 --genome $PWD/refseq/GRCh38_full_analysis_set_plus_decoy_hla.fa \
 --mtdna $PWD/refseq/rCRS_chrM_16449-1-16569.fa \
@@ -46,16 +48,17 @@ python stamp.py init \
 
 The default values of these arguments can also be manually edited in the argument file under the "tools" folder of your project.
 ```bash
-#stamp.arg
 #full path of the samtools executable
 samtools=/home/user/bin/samtools
 #full path of the bwa executable
 bwa=/home/user/bin/bwa
-#full path of the bamleftalign/freebyes executable
+#full path of the bamleftalign/freebayes executable
 bamleftalign=/home/user/bin/bamleftalign
-#full path of the file with the probe information
+#full path of the picard executable
+picard=java -jar  /home/user/bin/picard.jar
+#full path of the file containing the STAMP probe information
 probe=/home/user/stamp/refseq/stamp_el_probe.txt
-#full path of the complete genome reference
+#full path of the complete reference genome sequences
 genome=/home/user/stamp/refseq/GRCh38_full_analysis_set_plus_decoy_hla.fa
 #full path of the mtDNA reference sequence
 mtdna=/home/user/stamp/refseq/rCRS_chrM_16449-1-16569.fa
@@ -65,8 +68,8 @@ mtdna_offset=120
 
 ## Lists of stamp arguments
 
-There are four functional modules in stamp, including `algin`, `pileup`, `scan`, and `annot`.
-Here is the command to list all stamp modules:
+There are four function modules designed for processing paired-end reads produced from **mt-STAMP**: **`algin`**, **`pileup`**, **`scan`**, and **`annot`**.
+Two other modules were added to process paired-end reads generated by **whole-genome sequencing**: **`wgs-align`** and **`wgs-depth`**.
 
 ```console
 stamp@mito:~$ python stamp.py -h
@@ -74,14 +77,19 @@ stamp@mito:~$ python stamp.py -h
         Usage: stamp.py <command> [options]
         Command: align                  generate the consensus read alignments
                  pileup                 summarize the consensus read bases
+                 wgs-align              generate mtDNA alignments (using whole-genome sequencing data)
+                 wgs-depth              summarize read coverage on nuclear DNA (using whole-genome sequencing data)
                  scan                   variant identification
                  annot                  variant annotation
 
 ```
 
-You can print out the list of arguments in each module by specifying the name of the module along with the "**--help**" or "**-h**" argument.
+Print out the list of arguments of each module by specifying the name of the module along with the "**--help**" or "**-h**" argument.
 
-**1. print out all arguments of **`stamp align`****
+**1. Print out all arguments of **`stamp align`****
+
+You could find details of the arguments of **`algin`**, **`pileup`**, **`scan`**, and **`annot`** in the related [examples](#examples-of-stamp) as shown below.
+ 
 ```console
 stamp@mito:~$ python stamp.py align -h
 
@@ -107,7 +115,8 @@ optional arguments:
 ```
 
 
-**2. print out all arguments of **`stamp pileup`****
+**2. Print out all arguments of **`stamp pileup`****
+
 ```console
 stamp@mito:~$ python stamp.py pileup --help
 
@@ -138,7 +147,7 @@ optional arguments:
 ```
 
 
-**3. print out all arguments of **`stamp scan`****
+**3. Print out all arguments of **`stamp scan`****
 
 ```console
 stamp@mito:~$ python stamp.py scan --help
@@ -172,7 +181,7 @@ optional arguments:
 ```
 
 
-**4. print out all arguments of **`stamp annot`****
+**4. Print out all arguments of **`stamp annot`****
 
 ```console
 stamp@mito:~$ python stamp.py annot --help
@@ -203,9 +212,65 @@ optional arguments:
   ...
 ```
 
+**5. Print out all arguments of **`stamp wgs-align`****
+
+**`stamp wgs-align`** follows a similar mapping strategy to that of **`stamp align`** to identify reads from mtDNA. It first aligns reads to the complete human genome to identify reads from NUMTS and then maps reads to mtDNA. Note that **`stamp wgs-align`** uses a different reference mtDNA sequence which has the final 150bp of the rCRS copied to the start (sequence files are provided under the folder refseq: refseq/rCRS_chrM_16419-1-16569.fa), instead of 120bp as used for **`stamp align`**, given that the length of a read from whole-genome sequencing may exceed 120bp. **`stamp wgs-align`** also summarizes base information and outputs a corresponding pileup file that can be read by **`stamp scan`**. 
+
+```console
+stamp@mito:~$ python stamp.py wgs-align --help
+
+usage: stamp wgs-align [-options] [outpath]
+
+positional arguments:
+  outpath                               specify the prefix of the output files
+
+optional arguments:
+  -h, --help                            show this help message and exit
+  -v, --version                         show program's version number and exit
+  --fastq FASTQ_FILE [FASTQ_FILE ...]   fastq files (in the format: name:R1:R2 ...)
+  --bam BAM_FILE [BAM_FILE ...]         bam files (in the format: name:bam ...)
+  --genome GENOME                       specify the complete reference genome sequences
+  --mtdna MTDNA                         specify the mtDNA reference sequence
+  --mtdna-offset MTDNA_OFFSET           specify the coordinate offset when parsing mtDNA alignments
+  --remap-genome                        re-map reads from bam files to the reference genome sequences
+  --remap-mtdna                         re-map reads from bam files to the mtDNA sequence
+  --recal                               enable BAQ re-calibration and indel re-alignment
+  --family FAMILY                       specify the family name of output sample(s) 
+  --pileup                              convert bam file to pileup file
+  -q MAPQ_MIN, --mapq-min MAPQ_MIN      minimum mapping quality
+  -Q QUAL_MIN, --qual-min QUAL_MIN      minimum base alignment quality
+  -r, --realign-recal                   enable remap-genome, remap-mtdna, recal and pileup
+  -z, --gzip                            compress the resulting pileup file with gzip
+  -s SUFFIX, --suffix SUFFIX            name suffix of the resulting pileup file (family.suffix.type)
+  --override                            regenerate all files without checking file existence
+```
+
+**6. Print out all arguments of **`stamp wgs-depth`****
+
+**`stamp wgs-depth`** computes sequencing depth on nuclear DNA in sliding windows of 100-kb with step size of 50-kb. The results can be used to estimate mtDNA content as two times the average ratio of read coverage between mtDNA and each of the 22 autosomal chromosomes.
+
+```console
+usage: stamp wgs-depth [-options] [outprefix]
+
+positional arguments:
+  input                                 input bam/cram file
+  output                                output file
+
+optional arguments:
+  -h, --help                            show this help message and exit
+  -v, --version                         show program's version number and exit
+  --refseq REFSEQ, -r REFSEQ            specify the reference genome sequences
+  --win-size WIN_SIZE                   specify the size of the sliding window (default:100kb)
+  --sliding-size SLIDING_SIZE           specify the step size of the sliding window (default:50kb)
+  --min-sites MIN_SITES                 specify the minimum proportion of sites with read coverage allowed in a sliding window
+  --qual-filter QUAL_FILTER             specify quality filters 
+  --proper-pair                         only include unique reads that are properly paired
+  --chr-incl CHR_INCL                   specify chromosomes (default is all)
+```
+
 ## Examples of stamp
 
-**1. alignment of paired-end reads using `stamp align`**
+**1. Alignment of paired-end reads using `stamp align`**
 
 **Example:** perform paired-end read alignment and call consensus reads for sample1
 ```bash
@@ -218,7 +283,6 @@ python stamp.py align -r1 sample1.R1.fastq -r2 sample1.R2.fastq \
 ```
 
 **Important arguments:**
-
 - **-r1**, **-r2**: the R1 and R2 files containing paired-end reads; **`stamp align`** can read and combine multiple R1 and R2 files of a sample.
 - **--genome**: the complete human genome sequence in FASTA format with bwa index.
 - **--mtdna**: the mtDNA sequence in FASTA format with bwa index.
@@ -228,7 +292,7 @@ python stamp.py align -r1 sample1.R1.fastq -r2 sample1.R2.fastq \
 - **--output**: the output directory for the alignment files of the paired-end reads.
 
 **Output files:**
-- **bam/sample1_R(1/2).fastq.gz**: the fastq files with barcode and probe information trimmed and stored as an annotation in read description (i.e. XM:Z:1:barcode:probe1:probe2).
+- **bam/sample1_R(1/2).fastq.gz**: the fastq files with barcode and probe information trimmed and stored as an annotation in read description (i.e., XM:Z:1:barcode:probe1:probe2).
 - **consensus.realign.recal/bam/sample1.mtdna.sorted.realign.recal.bam**: the alignment file of paired-end reads generated after base recalibration.  
 - **consensus.realign.recal/bam/sample1.mtdna.consensus.bam**: the alignment file of consensus reads. Consensus reads are output as single-end reads constructed from paired-end reads with the same barcode (read family). Read names are assigned using that of the first paired-end read in a read family. The number of paired-end reads and the barcode is recorded in the SAM TAGs "XF" and "XM" of the consensus read.
 
@@ -260,12 +324,12 @@ python stamp.py pileup -a sample1.mtdna.consensus.bam \
 - **--tag-excl**/**--tag-incl**: filter out or retain consensus reads using quality information in SAM TAG "XQ"
 **Output file:**
 - **consensus.realign.recal/var/sample1.mtdna.consensus.adj.pileup**: the resulting pileup file, which is compressed if "**-z**" is turned on.
-- **consensus.realign.recal/var/sample1.coverage**: a table recording consensus read coverage at each site. Data include: (1) chromosome; (2) position; (3) original position in rCRS; (4) the reference allele; (5) total depth of consensus reads; (6) the number of reads with BAQ between 0 and 10; (7) the number of reads with BAQ between 10 and 20; (8) the number of reads with BAQ between 20 and 30; (9) the number of reads with BAQ between 30 and 40; (10) the number of reads with BAQ over 40; (11) total read number; (12)  the relative distance to the nearest ligation probe; (13) the relative distance to the nearest extension probe; (14) location on the ligation probe starting from the 3' end; (15) location on the extension probe starting from the 3' end; (16) probe information.
+- **consensus.realign.recal/var/sample1.coverage**: a table recording consensus read coverage at each site. Data include: (**1**) chromosome; (**2**) position; (**3**) original position in the rCRS; (**4**) the reference allele; (**5**) total depth of consensus reads; (**6**) the number of reads with BAQ between 0 and 10; (**7**) the number of reads with BAQ between 10 and 20; (**8**) the number of reads with BAQ between 20 and 30; (**9**) the number of reads with BAQ between 30 and 40; (**10**) the number of reads with BAQ over 40; (**11**) total read number; (**12**)  the relative distance to the nearest ligation probe; (**13**) the relative distance to the nearest extension probe; (**14**) location on the ligation probe starting from the 3' end; (**15**) location on the extension probe starting from the 3' end; (**16**) probe information.
 
 ***
 **3. mtDNA variant detection using **`stamp scan`****
 
-**Example:** call mtDNA homoplasmies and heteroplasmies which had a minor allele fraction >=1% with at least 5 minor allele and a total of 500 reads with BAQ>=30
+**Example:** call mtDNA homoplasmies and heteroplasmies which have a minor allele fraction >=1% with at least 5 minor alleles and a total of 500 reads with BAQ>=30
 ```bash
 python stamp.py scan --name sample1 \
 --mind 100 --mindh 500 --min-qual 30 --minh 5 --min-het 0.01 --mle \
@@ -280,7 +344,7 @@ consensus.realign.recal/var/sample1.mtdna.consensus.adj.pileup.gz consensus.real
 - **--family:** a family identifier of the sample(s).
 
 **Output file:**
-- **consensus.realign.recal/var/sample1.q30.var:** a text file (tab-separated) which contains information on the variants identified; it contains information for all mtDNA sites if "**--all-sites**" is turned on. Data include: (1) family id; (2) sample id; (3) chromosome; (4) position in rCRS; (5) reference allele (rCRS); (6) total depth of unique (consensus) reads; (7) depth of reads on the forward strand; (8) depth of reads on the reverse strand; (9) major allele; (10-13) numbers of A, T, C and G on the forward strand passing quality filtering; (14-17) numbers of A, T, C and G on the reverse strand passing quality filtering; (18) binary status of heteroplasmy; (19) binary status of homoplasmy; (20) minor allele; (21) minor allele fraction; (22) minor allele fraction computed using maximum likelihood estimation; (23) minor allele fraction log likelihood ratio; (24-25) lower and upper bounds of the 95% confidence interval of the minor allele fraction; (26) Fisher's exact test on the minor allele count; (27) strand difference in allele fractions (Fisher's exact test P value).
+- **consensus.realign.recal/var/sample1.q30.var:** a text file (tab-separated) which contains information on the variants identified; it contains information for all mtDNA sites if "****--all-sites****" is turned on. Data include: (**1**) family id; (**2**) sample id; (**3**) chromosome; (**4**) position in the rCRS; (**5**) the reference allele (rCRS); (**6**) total depth of unique (consensus) reads; (**7**) depth of reads on the forward strand; (**8**) depth of reads on the reverse strand; (**9**) the major allele; (**10**-**13**) numbers of A, T, C and G on the forward strand passing quality filtering; (**14**-**17**) numbers of A, T, C and G on the reverse strand passing quality filtering; (**18**) binary status of heteroplasmy; (**19**) binary status of homoplasmy; (**20**) the minor allele; (**21**) minor allele fraction; (**22**) minor allele fraction computed using maximum likelihood estimation; (**23**) minor allele fraction log-likelihood ratio; (**24**-**25**) lower and upper bounds of the 95% confidence interval of the minor allele fraction; (**26**) Fisher's exact test for the minor allele count; (**27**) strand difference in allele fractions (Fisher's exact test P value).
 
 
 ***
@@ -300,16 +364,16 @@ python stamp.py annot --exclude low_quality_sites.txt --remove low_quality_sampl
 - **--annotate**: a text file with annotation information for mtDNA. An example is provided under the folder refseq.
 
 **Output files:**
-- **all.q30.var.qc.annot:** a text file (tab-separated) contains information on the variants passing all quality filters and the related mtDNA annotation. The status column in this file indicates the type of the variants: "homoplasmy", "heteroplasmy", and "possible heteroplasmy". "Possible heteroplasmy" indicates a variant which has VAF great than the provided cutoff but does not pass other quality control filters. 
+- **all.q30.var.qc.annot:** a text file (tab-separated) contains information on the variants passing all quality filters and the related mtDNA annotation. The status column in this file indicates the type of the variants: "homoplasmy", "heteroplasmy", and "possible heteroplasmy". "Possible heteroplasmy" indicates a variant which has VAF greater than the provided cutoff but does not pass other quality control filters. 
 - **all.q30.var.qc.hsd:** the hsd file recording the major allele information different from the reference mtDNA sequence.
 - **all.q30.var.qc.{tped/map/fam}:** the plink files recording the major allele information different from the reference mtDNA sequence.
 
 
 ## Other tools
-Several python or R scripts (only with limited comments now) used for processing results generated from **`stamp`** are provied in the folder tools.
-Some functionality of those scripts will be incorperated into **`stamp`** in the future.
+Several python or R scripts (only with limited comments now) used for processing results generated from **`stamp`** are provided in the folder tools.
+Some functionalities of these scripts will be incorporated into **`stamp`** in the future.
 
-**1. extract and combine alignment information in the ".summary" files output from `stamp align`**
+**1. Extract and combine alignment information in the ".summary" files output from `stamp align`**
 
 ```bash
 #bam/*.summary is a summary of the results of paired-end read demultiplexing,
@@ -332,7 +396,7 @@ grep family_size consensus.realign.recal/bam/*.summary|grep DNA \
 python tools/summarize_reads.py consensus.realign.recal/all >consensus.realign.recal/all.probe.combined
 ```
 
-**2. extract site covarage information in the ".coverage" file output from `stamp pileup`**
+**2. Extract site coverage information in the ".coverage" file output from `stamp pileup`**
 
 ```bash
 #summarize coverage of consensus reads for each probe of STAMP after quality filtering
@@ -345,7 +409,7 @@ python tools/summarize_coverage_probe.py ${batch}/${align}/var.f2/*.coverage \
 >consensus.realign.recal/all.f2.coverage.summary
 ```
 
-**3. compare read depths and allele fractions at corresonding sites of two samples or in two ".var" files** 
+**3. Compare read depths and allele fractions at corresponding sites of two samples or in two ".var" files** 
 
 ```bash
 #extract all possible mtDNA variants from the ".var" file output from `stamp scan`
@@ -367,8 +431,8 @@ consensus.realign.recal/var.f1 .f1.q23 consensus.realign.recal/all.q30.f1_q23.va
 python tools/summarize_variation.py consensus.realign.recal/all.q30.var.combined \
 consensus.realign.recal/var.f2 .f2.q40 consensus.realign.recal/all.q30.f2_q40.var.combined
 
-#compare allele fractions of corresponding sites in two ".var" files
-#i.e. compare allele fractions between consensus reads with and without duplications
+#compare allele fractions at corresponding sites in two ".var" files
+#e.g., compare allele fractions between consensus reads constructed with and without duplications
 #stored in the files under the "var.f2" folder and the "var.f1" folder respectively
 #consensus.realign.recal/all.q30.f1andf2.var.combined can also be read by **`stamp annot`** for annotation
 Rscript tools/summarize_variation_freq.R consensus.realign.recal/all.q30.var.combined \
@@ -377,10 +441,15 @@ consensus.realign.recal/all.q30.f2_q40.var.combined \
 consensus.realign.recal/all.q30.f1andf2.var.combined
 ```
 
+## Updates
+- *Aug. 11, 2021*: Added modules to process paired-end reads generated from whole-genome sequencing.
+
+
 ## References
-1) Li, H. & Durbin, R. Fast and accurate long-read alignment with Burrows-Wheeler transform. Bioinformatics **26**, 589-95 (2010).
-2) Garrison, E. & Marth, G. Haplotype-based variant detection from short-read sequencing. arXiv preprint arXiv:1207.3907 (2012).
-3) Li, H. et al. The Sequence Alignment/Map format and SAMtools. Bioinformatics **25**, 2078-9 (2009).
+1) X. Guo, Y. Wang, R. Zhang, Z. Gu, STAMP: a multiplex sequencing method for simultaneous evaluation of mitochondrial DNA heteroplasmies and content. NAR Genomics Bioinforma. **2**, lqaa065 (2020).
+2) H. Li & R. Durbin, Fast and accurate long-read alignment with Burrows-Wheeler transform. Bioinformatics. **26**, 589-95 (2010).
+3) E. Garrison & G. Marth, Haplotype-based variant detection from short-read sequencing. arXiv [preprint]. arXiv:1207.3907 (2012).
+4) H. Li, *et al*., The Sequence Alignment/Map format and SAMtools. Bioinformatics. **25**, 2078-9 (2009).
 
 ## Licensing
 
