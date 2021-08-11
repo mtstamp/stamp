@@ -21,7 +21,7 @@ At the root of your project, use **`git clone`** to download the current **`stam
 ```shell
 git clone https://github.com/mtstamp/stamp.git
 ```
-**`stamp`** relies on [bwa-mem](https://github.com/lh3/bwa) [2] and bamleftalign from [freebayes](https://github.com/ekg/freebayes) [2] for aligning paired-end reads, and [samtools](https://github.com/samtools/) [3] for processing alignment files and summarizing base information. So you need to have access to the executables of these tools to run **`stamp`**. 
+**`stamp`** relies on [bwa-mem](https://github.com/lh3/bwa) [2] and bamleftalign from [freebayes](https://github.com/ekg/freebayes) [3] for aligning paired-end reads, and [samtools](https://github.com/samtools/) [4] for processing alignment files and summarizing base information. So you need to have access to the executables of these tools to run **`stamp`**. 
 **`stamp`** uses the reference human genome containing both nuclear DNA (genome assembly GRCh38) and mitochondrial DNA (mtDNA; the Revised Cambridge Reference Sequence, rCRS) sequences for read alignment. You can download the file containing the reference human genome sequence (GRCh38 plus rCRS and other sequences) and the pre-built index files from the ftp site of the 1000 Genomes project.
 ```bash
 cd stamp
